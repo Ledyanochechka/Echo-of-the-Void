@@ -2,14 +2,18 @@ import arcade
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+DEAD_ZONE_X = 200
+DEAD_ZONE_Y = 150
+WORLD_WIDTH = 8000
+WORLD_HEIGHT = 6000
 
 
 class Player(arcade.Sprite):
-    def __init__(self, image_path="images/npc/player_good_npc.png"):
+    def __init__(self, image_path=":resources:images/animated_characters/female_person/femalePerson_idle.png"):
         super().__init__(image_path, scale=0.5)
-        self.speed = 5
-        self.sprint_speed = 10
-        self.jump_speed = 10
+        self.speed = 3
+        self.sprint_speed = 5
+        self.jump_speed = 12
         self.physics_engine = None
         self.can_jump = False
         self.is_sprinting = False
@@ -33,8 +37,8 @@ class Player(arcade.Sprite):
         if self.left < 0:
             self.left = 0
             self.change_x = 0
-        if self.right > SCREEN_WIDTH:
-            self.right = SCREEN_WIDTH
+        if self.right > WORLD_WIDTH:
+            self.right = WORLD_WIDTH
             self.change_x = 0
 
     def move(self, direction):
@@ -58,10 +62,6 @@ class Player(arcade.Sprite):
             current_speed = self.sprint_speed if is_sprinting else self.speed
             self.change_x = abs(self.change_x) / self.change_x * current_speed
 
-class Space_button(arcade.Sprite):
-    def __init__(self, x, y):
-        super().__init__(path_or_texture='images/buttons/Space_butt.png', center_x=x, center_y=y)
-
 
 class MyGame(arcade.Window):
     def __init__(self):
@@ -73,30 +73,57 @@ class MyGame(arcade.Window):
         self.right_pressed = False
         self.shift_pressed = False
 
+    def center_camera_to_player(self):
+        cam_x, cam_y = self.camera.position
+        px, py = self.player.center_x, self.player.center_y
+
+        half_w = self.camera.viewport_width / 2
+        half_h = self.camera.viewport_height / 2
+
+        DEAD_X = 200
+        DEAD_Y = 120
+
+
+        left = cam_x - half_w + DEAD_X
+        right = cam_x + half_w - DEAD_X
+        bottom = cam_y - half_h + DEAD_Y
+        top = cam_y + half_h - DEAD_Y
+
+        if px < left:
+            cam_x -= (left - px)
+        elif px > right:
+            cam_x += (px - right)
+
+        if py < bottom:
+            cam_y -= (bottom - py)
+        elif py > top:
+            cam_y += (py - top)
+
+
+        cam_x = max(half_w, min(cam_x, WORLD_WIDTH - half_w))
+        cam_y = max(half_h, min(cam_y, WORLD_HEIGHT - half_h))
+
+        self.camera.position = (cam_x, cam_y)
+
     def setup(self):
+        self.camera = arcade.Camera2D()
         self.scene = arcade.Scene()
-        self.space_button = Space_button(500, 300)
         self.player = Player()
-        self.player.center_x = 100
+        self.player.center_x = 400
         self.player.center_y = 100
         self.scene.add_sprite("Player", self.player)
-        self.scene.add_sprite('Space_button', self.space_button)
 
         platforms = arcade.SpriteList()
-        for x in range(0, 900, 64):
+        for x in range(0, 9000, 64):
             platform = arcade.Sprite(":resources:images/tiles/grassMid.png", scale=0.5)
             platform.center_x = x
             platform.center_y = 32
             platforms.append(platform)
-
-        platform1 = arcade.Sprite(":resources:images/tiles/grassMid.png", scale=0.5)
-        platform1.center_x = 600
-        platform1.center_y = 100
-        platforms.append(platform1)
-        platform2 = arcade.Sprite(":resources:images/tiles/grassMid.png", scale=0.5)
-        platform2.center_x = 600
-        platform2.center_y = 160
-        platforms.append(platform2)
+        for i in range(10):
+            platform1 = arcade.Sprite(":resources:images/tiles/grassMid.png", scale=0.5)
+            platform1.center_x = 300 + i * 100
+            platform1.center_y = 200 + i * 100
+            platforms.append(platform1)
 
         self.scene.add_sprite_list("Platforms", sprite_list=platforms)
 
@@ -109,6 +136,7 @@ class MyGame(arcade.Window):
 
     def on_draw(self):
         self.clear()
+        self.camera.use()
         self.scene.draw()
 
     def on_update(self, delta_time):
@@ -123,21 +151,22 @@ class MyGame(arcade.Window):
 
         self.player.sprint(self.shift_pressed)
         self.player.update()
+        self.center_camera_to_player()
 
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.A:
+        if key == arcade.key.LEFT:
             self.left_pressed = True
-        elif key == arcade.key.D:
+        elif key == arcade.key.RIGHT:
             self.right_pressed = True
-        elif key == arcade.key.SPACE:
+        elif key == arcade.key.UP:
             self.player.jump()
         elif key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.shift_pressed = True
 
     def on_key_release(self, key, modifiers):
-        if key == arcade.key.A:
+        if key == arcade.key.LEFT:
             self.left_pressed = False
-        elif key == arcade.key.D:
+        elif key == arcade.key.RIGHT:
             self.right_pressed = False
         elif key in (arcade.key.LSHIFT, arcade.key.RSHIFT):
             self.shift_pressed = False
