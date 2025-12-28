@@ -1,13 +1,41 @@
-import random
 import arcade
 from pyglet.graphics import Batch
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-DEAD_ZONE_X = 200
-DEAD_ZONE_Y = 150
 WORLD_WIDTH = 8000
 WORLD_HEIGHT = 6000
+
+
+class StartView(arcade.View):
+    def __init__(self, game_view):
+        super().__init__()
+        self.game_view = game_view
+        self.batch = Batch()
+        self.txt = None
+
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.BLACK)
+        self.batch = Batch()
+        self.txt = arcade.Text(
+            "Нажмите ENTER для начала игры",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.YELLOW_ORANGE,
+            25,
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
+    def on_draw(self):
+        self.clear()
+        self.batch.draw()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ENTER:
+            self.game_view.setup()
+            self.window.show_view(self.game_view)
 
 
 class Player(arcade.Sprite):
@@ -19,7 +47,6 @@ class Player(arcade.Sprite):
         self.physics_engine = None
         self.can_jump = False
         self.is_sprinting = False
-        self.facing_right = True
 
     def setup_physics(self, physics_engine):
         self.physics_engine = physics_engine
@@ -31,10 +58,8 @@ class Player(arcade.Sprite):
 
         if self.change_x > 0:
             self.scale_x = abs(self.scale_x)
-            self.facing_right = True
         elif self.change_x < 0:
             self.scale_x = -abs(self.scale_x)
-            self.facing_right = False
 
         if self.left < 0:
             self.left = 0
@@ -45,10 +70,7 @@ class Player(arcade.Sprite):
 
     def move(self, direction):
         current_speed = self.sprint_speed if self.is_sprinting else self.speed
-        if direction == "right":
-            self.change_x = current_speed
-        elif direction == "left":
-            self.change_x = -current_speed
+        self.change_x = current_speed if direction == "right" else -current_speed
 
     def stop(self):
         self.change_x = 0
@@ -62,18 +84,22 @@ class Player(arcade.Sprite):
         self.is_sprinting = is_sprinting
         if self.change_x != 0:
             current_speed = self.sprint_speed if is_sprinting else self.speed
-            self.change_x = abs(self.change_x) / self.change_x * current_speed
+            self.change_x = (abs(self.change_x) / self.change_x) * current_speed
 
 
-class MyGame(arcade.Window):
+class MyGame(arcade.View):
     def __init__(self):
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, "Player Example")
+        super().__init__()
         self.scene = None
         self.player = None
         self.physics_engine = None
+
         self.left_pressed = False
         self.right_pressed = False
         self.shift_pressed = False
+
+        self.background = None
+        self.camera = None
 
     def center_camera_to_player(self):
         cam_x, cam_y = self.camera.position
@@ -106,9 +132,11 @@ class MyGame(arcade.Window):
         self.camera.position = (cam_x, cam_y)
 
     def setup(self):
-        self.background = arcade.load_texture('images/backgrounds/background.png')
+        self.background = arcade.load_texture("images/backgrounds/background.png")
         self.camera = arcade.Camera2D()
+
         self.scene = arcade.Scene()
+
         self.player = Player()
         self.player.center_x = 400
         self.player.center_y = 100
@@ -120,6 +148,7 @@ class MyGame(arcade.Window):
             platform.center_x = x
             platform.center_y = 32
             platforms.append(platform)
+
         for i in range(10):
             platform1 = arcade.Sprite("images/backgrounds/island.png", scale=0.5)
             platform1.center_x = 300 + i * 100
@@ -129,24 +158,28 @@ class MyGame(arcade.Window):
         self.scene.add_sprite_list("Platforms", sprite_list=platforms)
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player,
-            gravity_constant=0.5,
-            walls=self.scene["Platforms"]
+            self.player, gravity_constant=0.5, walls=self.scene["Platforms"]
         )
         self.player.setup_physics(self.physics_engine)
 
     def on_draw(self):
         self.clear()
 
-        for i in range(0, 10):
-            for j in range(0, 10):
-                arcade.draw_texture_rect(self.background,
-                                         arcade.rect.XYWH(0 + 800 * j, 0 + 600 * i, SCREEN_WIDTH, SCREEN_HEIGHT))
+        # фон (плиткой)
+        for i in range(10):
+            for j in range(10):
+                arcade.draw_texture_rect(
+                    self.background,
+                    arcade.rect.XYWH(0 + 800 * j, 0 + 600 * i, SCREEN_WIDTH, SCREEN_HEIGHT),
+                )
 
         self.camera.use()
         self.scene.draw()
 
     def on_update(self, delta_time):
+        if not self.physics_engine:
+            return
+
         self.physics_engine.update()
 
         if self.left_pressed and not self.right_pressed:
@@ -180,8 +213,10 @@ class MyGame(arcade.Window):
 
 
 def main():
-    game = MyGame()
-    game.setup()
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "Echo of the Void")
+    game_view = MyGame()
+    start_view = StartView(game_view)
+    window.show_view(start_view)
     arcade.run()
 
 
