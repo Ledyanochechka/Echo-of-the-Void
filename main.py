@@ -157,6 +157,20 @@ class MyGame(arcade.View):
 
         self.scene.add_sprite_list("Platforms", sprite_list=platforms)
 
+        enemies = arcade.SpriteList()
+        enemy = arcade.Sprite(':resources:images/tiles/mushroomRed.png')
+        enemy.center_x = 600
+        enemy.center_y = 300
+        enemies.append(enemy)
+
+        self.scene.add_sprite_list('Enemies', sprite_list=enemies)
+
+        final_flag = arcade.Sprite(':resources:images/items/flagRed2.png', scale=0.5)
+        final_flag.center_x = 700
+        final_flag.center_y = 72
+
+        self.scene.add_sprite('Final_flag', final_flag)
+
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player, gravity_constant=0.5, walls=self.scene["Platforms"]
         )
@@ -165,12 +179,11 @@ class MyGame(arcade.View):
     def on_draw(self):
         self.clear()
 
-        # фон (плиткой)
         for i in range(10):
             for j in range(10):
                 arcade.draw_texture_rect(
                     self.background,
-                    arcade.rect.XYWH(0 + 800 * j, 0 + 600 * i, SCREEN_WIDTH, SCREEN_HEIGHT),
+                    arcade.rect.XYWH(0 + SCREEN_WIDTH * j, 0 + SCREEN_HEIGHT * i, SCREEN_WIDTH, SCREEN_HEIGHT),
                 )
 
         self.camera.use()
@@ -188,6 +201,9 @@ class MyGame(arcade.View):
             self.player.move("right")
         else:
             self.player.stop()
+
+        if self.player.center_x in [i for i in range(650, 700)] and self.player.center_y in [i for i in range(0, 100)]:
+            print('win')
 
         self.player.sprint(self.shift_pressed)
         self.player.update()
