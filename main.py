@@ -524,6 +524,7 @@ class Player(arcade.Sprite):
     def setup_physics(self, physics_engine):
         self.physics_engine = physics_engine
 
+
     def update(self):
         if not self.is_alive:
             return
