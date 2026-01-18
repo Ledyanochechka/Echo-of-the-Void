@@ -528,7 +528,6 @@ class Player(arcade.Sprite):
         if not self.is_alive:
             return
 
-
         super().update()
         if self.physics_engine:
             self.can_jump = self.physics_engine.can_jump()
