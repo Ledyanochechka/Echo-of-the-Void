@@ -394,6 +394,56 @@ class Room:
         return x, y
 
 
+class WinWindow(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.batch = Batch()
+        self.txt = None
+
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.BLACK)
+        self.batch = Batch()
+        self.txt = arcade.Text(
+            "Ты прошёл, ты крутой!",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.DARK_GREEN,
+            25,
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
+    def on_draw(self):
+        self.clear()
+        self.batch.draw()
+
+
+class LoseWindow(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.batch = Batch()
+        self.txt = None
+
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.BLACK)
+        self.batch = Batch()
+        self.txt = arcade.Text(
+            "Ты проиграл, анлак",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.RED,
+            25,
+            anchor_x="center",
+            anchor_y="center",
+            batch=self.batch,
+        )
+
+    def on_draw(self):
+        self.clear()
+        self.batch.draw()
+
+
 class StartView(arcade.View):
     def __init__(self, game_view):
         super().__init__()
@@ -520,6 +570,7 @@ class Player(arcade.Sprite):
         self.can_jump = False
         self.is_sprinting = False
         self.is_alive = True  # Добавляем флаг жизни игрока
+        self.is_won = False
 
     def setup_physics(self, physics_engine):
         self.physics_engine = physics_engine
@@ -646,6 +697,7 @@ class MyGame(arcade.View):
 
         self.game_over = False
         self.game_over_text = None
+        self.pause_fl = False
 
         self.scene = arcade.Scene()
 
@@ -677,10 +729,12 @@ class MyGame(arcade.View):
     def create_rooms(self):
         self.rooms = []
 
-        room1 = Room(x=450, y=2700, width=600, height=5000)
-        self.rooms.append(room1)
+        self.room1 = Room(x=450, y=2700, width=600, height=5000)
+        self.rooms.append(self.room1)
+        self.room2 = Room(x=2000, y=2700, width=600, height=5000)
+        self.rooms.append(self.room2)
 
-        self.current_room = room1
+        self.current_room = self.room1
 
     def check_npc_proximity(self):
         self.near_npc = None
@@ -703,16 +757,8 @@ class MyGame(arcade.View):
             if collision_list:
                 print("loose - столкнулся с врагом")
                 self.player.die()
+                self.window.show_view(LoseWindow())
                 self.game_over = True
-                self.game_over_text = arcade.Text(
-                    "ВЫ ПРОИГРАЛИ!",
-                    self.window.width / 2,
-                    self.window.height / 2,
-                    arcade.color.RED,
-                    40,
-                    anchor_x="center",
-                    anchor_y="center"
-                )
                 break
 
             # Проверяем столкновение игрока с пулями в комнате
@@ -724,16 +770,8 @@ class MyGame(arcade.View):
                     bullet.remove_from_sprite_lists()
 
                 self.player.die()
+                self.window.show_view(LoseWindow())
                 self.game_over = True
-                self.game_over_text = arcade.Text(
-                    "ВЫ ПРОИГРАЛИ!",
-                    self.window.width / 2,
-                    self.window.height / 2,
-                    arcade.color.RED,
-                    40,
-                    anchor_x="center",
-                    anchor_y="center"
-                )
                 break
 
     def on_draw(self):
@@ -773,7 +811,6 @@ class MyGame(arcade.View):
 
         # Если игра окончена, рисуем текст проигрыша
         if self.game_over and self.game_over_text:
-            print('lost')
             self.game_over_text.draw()
 
     def on_update(self, delta_time):
@@ -810,6 +847,19 @@ class MyGame(arcade.View):
                 self.current_room = room
                 break
 
+        if self.current_room == self.room1:
+            if self.player.center_x in [i for i in range(375, 425)] and self.player.center_y in [i for i in range(200, 250)]:
+                self.player.center_x = 2025
+                self.player.center_y = 5200
+        elif self.current_room == self.room2:
+            if self.player.center_x in [i for i in range(1700, 2300)] and self.player.center_y in [i for i in range(5000, 5250)]:
+                if self.game_over:
+                    self.window.show_view(LoseWindow())
+                else:
+                    self.window.show_view(WinWindow())
+                    #починить окно победы
+                    print('победа')
+
         self.center_camera_to_player()
 
     def on_key_press(self, key, modifiers):
@@ -829,6 +879,14 @@ class MyGame(arcade.View):
             self.shift_pressed = True
         elif key == arcade.key.E and self.near_npc:
             self.near_npc.interact()
+        elif key == arcade.key.ESCAPE:
+            if self.pause_fl:
+                self.player.speed = 3
+                self.player.can_jump = True
+            else:
+                self.player.speed = 0
+                self.player.can_jump = False
+                #дописать чтобы у противников тоже пропадала скорость
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.A:
