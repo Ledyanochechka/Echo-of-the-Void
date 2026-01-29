@@ -19,7 +19,7 @@ class Player(arcade.Sprite):
         self.physics_engine = None
         self.can_jump = False
         self.is_sprinting = False
-        self.is_alive = True  # Добавляем флаг жизни игрока
+        self.is_alive = True
         self.is_won = False
 
     def setup_physics(self, physics_engine):
@@ -76,7 +76,7 @@ class Player(arcade.Sprite):
         self.is_sprinting = is_sprinting
         if self.change_x != 0:
             current_speed = self.sprint_speed if is_sprinting else self.speed
-            # Безопасно изменяем скорость, сохраняя направление
+
             direction = 1 if self.change_x > 0 else -1
             self.change_x = direction * current_speed
 

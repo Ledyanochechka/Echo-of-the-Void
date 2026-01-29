@@ -28,7 +28,7 @@ class MyGame(arcade.View):
         self.game_over = False
         self.game_over_text = None
 
-        # Добавляем комнаты
+
         self.rooms = []
         self.current_room = None
 
@@ -115,7 +115,7 @@ class MyGame(arcade.View):
             distance_x = abs(npc.center_x - self.player.center_x)
             distance_y = abs(npc.center_y - self.player.center_y)
 
-            # Если игрок находится в радиусе 100 пикселей от NPC
+
             if distance_x < 100 and distance_y < 100:
                 self.near_npc = npc
                 break
@@ -134,11 +134,11 @@ class MyGame(arcade.View):
                 self.game_over = True
                 break
 
-            # Проверяем столкновение игрока с пулями в комнате
+
             bullet_collision = arcade.check_for_collision_with_list(self.player, room.bullets)
             if bullet_collision:
                 print("loose - попал под обстрел")
-                # Удаляем пулю, в которую попал игрок
+
                 for bullet in bullet_collision:
                     bullet.remove_from_sprite_lists()
 
@@ -158,7 +158,6 @@ class MyGame(arcade.View):
 
             self.pause_batch.draw()
 
-        # Фон
         for i in range(10):
             for j in range(10):
                 arcade.draw_texture_rect(
@@ -168,18 +167,18 @@ class MyGame(arcade.View):
 
         self.camera.use()
 
-        # Рисуем все комнаты
+
         for room in self.rooms:
             room.draw()
 
-        # Рисуем сцену (игрока, NPC и др.)
+
         self.scene.draw()
 
-        # Рисуем диалоги всех NPC
+
         for npc in self.npcs:
             npc.draw_dialog()
 
-        # Рисуем подсказку для взаимодействия, если игрок рядом с NPC
+
         if self.near_npc and not self.near_npc.dialog_active and self.player.is_alive:
             arcade.draw_text(
                 "Нажмите E для разговора",
@@ -190,7 +189,7 @@ class MyGame(arcade.View):
                 anchor_y="center"
             )
 
-        # Если игра окончена, рисуем текст проигрыша
+
         if self.game_over and self.game_over_text:
             self.game_over_text.draw()
 
@@ -200,13 +199,13 @@ class MyGame(arcade.View):
 
         self.physics_engine.update()
 
-        # Проверяем близость к NPC
+
         self.check_npc_proximity()
 
-        # Проверяем столкновения с врагами и пулями
+
         self.check_collisions()
 
-        # Обновляем врагов и их стрельбу
+
         for room in self.rooms:
             room.update_enemies(delta_time, self.player.center_x, self.player.center_y)
             room.update_bullets()
@@ -222,7 +221,7 @@ class MyGame(arcade.View):
             self.player.sprint(self.shift_pressed)
             self.player.update()
 
-        # Определяем, в какой комнате находится игрок
+
         for room in self.rooms:
             if room.contains_point(self.player.center_x, self.player.center_y):
                 self.current_room = room
@@ -238,7 +237,7 @@ class MyGame(arcade.View):
                     self.window.show_view(LoseWindow())
                 else:
                     self.window.show_view(WinWindow())
-                    #починить окно победы
+
                     print('победа')
 
         self.center_camera_to_player()
@@ -246,7 +245,6 @@ class MyGame(arcade.View):
     def on_key_press(self, key, modifiers):
         if self.game_over:
             if key == arcade.key.ENTER:
-                # Перезапуск игры
                 self.setup()
             return
 

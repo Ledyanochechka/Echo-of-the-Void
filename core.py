@@ -6,8 +6,7 @@ class BaseOverlayView(arcade.View):
     TEXT = ""
     COLOR = arcade.color.WHITE
     FONT_SIZE = 25
-    RESTART_FUNC = None
-    WINDOW = None
+
 
     def __init__(self):
         super().__init__()

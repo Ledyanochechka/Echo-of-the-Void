@@ -18,7 +18,7 @@ class NPC(arcade.Sprite):
 
     def interact(self):
         if not self.dialog_active:
-            # Начинаем диалог с первой фразы
+
             self.dialog_active = True
             self.current_phrase_index = 0
             self.dialog_sprite.center_x = self.center_x
@@ -26,7 +26,7 @@ class NPC(arcade.Sprite):
         else:
             self.current_phrase_index += 1
 
-            # Если фразы закончились, закрываем диалог
+
             if self.current_phrase_index >= len(self.dialog_phrases):
                 self.dialog_active = False
                 self.current_phrase_index = 0
@@ -44,11 +44,10 @@ class NPC(arcade.Sprite):
         if not self.dialog_active:
             return
 
-        # Рисуем текст диалога рядом с уменьшенной текстурой
         text_x = self.center_x + 60
         text_y = self.center_y + 120
 
-        # Текст текущей фразы
+
         current_phrase = self.get_current_phrase()
         arcade.draw_text(
             current_phrase,
@@ -58,7 +57,6 @@ class NPC(arcade.Sprite):
             width=180, align="center"
         )
 
-        # Проверяем колличество сказанных фраз
         progress_text = self.get_progress_text()
         arcade.draw_text(
             progress_text,
@@ -67,7 +65,6 @@ class NPC(arcade.Sprite):
             anchor_x="center", anchor_y="center"
         )
 
-        # Подсказка для переключения/закрытия
         if self.current_phrase_index < len(self.dialog_phrases) - 1:
             hint_text = "Нажмите E для продолжения"
         else:
