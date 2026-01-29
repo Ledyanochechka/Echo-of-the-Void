@@ -149,6 +149,9 @@ class Room:
         self.obstacles.extend(self.ceilings)
         self.obstacles.extend(self.platforms)
 
+        self.first_platform_x = None
+        self.first_platform_y = None
+
     def load_textures(self):
         self.wall_texture = arcade.load_texture("images/backgrounds/wall.png")
         self.floor_texture = arcade.load_texture("images/backgrounds/floor.png")
@@ -216,7 +219,7 @@ class Room:
         max_x_offset = 150  # Максимальное смещение по X относительно предыдущей платформы
 
         # Генерируем первую платформу в случайном месте внизу
-        first_x = random.uniform(self.left + 100, self.right - 100)
+        first_x = 380
         first_y = start_y
         first_platform = Platform(first_x, first_y)
         self.platforms.append(first_platform)
@@ -397,51 +400,131 @@ class Room:
 class WinWindow(arcade.View):
     def __init__(self):
         super().__init__()
-        self.batch = Batch()
+        self.batch = None
         self.txt = None
+        self.ui_camera = None
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.BLACK)
+
+        self.ui_camera = arcade.camera.Camera2D()
+
         self.batch = Batch()
+
         self.txt = arcade.Text(
-            "Ты прошёл, ты крутой!",
-            self.window.width / 2,
-            self.window.height / 2,
-            arcade.color.DARK_GREEN,
+            "Ты победил!!!!\nQ — выход",
+            0, 0,
+            arcade.color.GREEN,
             25,
             anchor_x="center",
             anchor_y="center",
+            multiline=True,
+            width=self.window.width,
+            align="center",
             batch=self.batch,
         )
 
     def on_draw(self):
         self.clear()
+
+        self.ui_camera.use()
+
+        self.txt.x = self.window.width // 2
+        self.txt.y = self.window.height // 2 + self.txt.content_height // 2
+
         self.batch.draw()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.Q:
+            arcade.close_window()
 
 
 class LoseWindow(arcade.View):
     def __init__(self):
         super().__init__()
-        self.batch = Batch()
+        self.batch = None
         self.txt = None
+        self.ui_camera = None
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.BLACK)
+
+        self.ui_camera = arcade.camera.Camera2D()
+
         self.batch = Batch()
+
         self.txt = arcade.Text(
-            "Ты проиграл, анлак",
-            self.window.width / 2,
-            self.window.height / 2,
+            "Ты проиграл, анлак\n Q — выход",
+            0, 0,
             arcade.color.RED,
             25,
             anchor_x="center",
             anchor_y="center",
             batch=self.batch,
+            multiline=True,
+            width=self.window.width,
+            align="center",
         )
 
     def on_draw(self):
         self.clear()
+
+        self.ui_camera.use()
+
+        self.txt.x = self.window.width // 2
+        self.txt.y = self.window.height // 2 + self.txt.content_height // 2
+
         self.batch.draw()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.Q:
+            arcade.close_window()
+
+
+class PauseWindow(arcade.View):
+    def __init__(self, game_view):
+        super().__init__()
+        self.game_view = game_view
+        self.batch = None
+        self.txt = None
+        self.ui_camera = None
+
+    def on_show_view(self):
+        self.ui_camera = arcade.camera.Camera2D()
+        self.batch = Batch()
+
+        self.txt = arcade.Text(
+            "ПАУЗА\nESC — продолжить\nQ — выход",
+            0, 0,
+            arcade.color.WHITE,
+            28,
+            anchor_x="center",
+            anchor_y="center",
+            multiline=True,
+            width=400,
+            align="center",
+            batch=self.batch,
+        )
+
+    def on_draw(self):
+        self.game_view.on_draw()
+
+        # UI поверх
+        self.ui_camera.use()
+
+        self.txt.x = self.window.width // 2
+        self.txt.y = self.window.height // 2 + self.txt.content_height // 2
+
+        self.batch.draw()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.game_view)
+
+        elif key == arcade.key.Q:
+            arcade.close_window()
+
+
 
 
 class StartView(arcade.View):
@@ -642,6 +725,7 @@ class MyGame(arcade.View):
         self.scene = None
         self.player = None
         self.physics_engine = None
+        self.is_paused = False
 
         self.npcs = None
         self.near_npc = None
@@ -697,16 +781,17 @@ class MyGame(arcade.View):
 
         self.game_over = False
         self.game_over_text = None
-        self.pause_fl = False
 
         self.scene = arcade.Scene()
 
+        self.create_rooms()
+
         self.player = Player()
-        self.player.center_x = 400
+        self.player.center_x = 380
         self.player.center_y = 300
         self.scene.add_sprite("Player", self.player)
 
-        self.create_rooms()
+
 
         self.npcs = arcade.SpriteList()
         if self.rooms:
@@ -777,6 +862,14 @@ class MyGame(arcade.View):
     def on_draw(self):
         self.clear()
 
+        if self.is_paused:
+            self.ui_camera.use()
+
+            self.pause_text.x = self.window.width // 2
+            self.pause_text.y = self.window.height // 2 + self.pause_text.content_height // 2
+
+            self.pause_batch.draw()
+
         # Фон
         for i in range(10):
             for j in range(10):
@@ -814,7 +907,7 @@ class MyGame(arcade.View):
             self.game_over_text.draw()
 
     def on_update(self, delta_time):
-        if not self.physics_engine or self.game_over:
+        if not self.physics_engine or self.game_over or self.is_paused:
             return
 
         self.physics_engine.update()
@@ -880,13 +973,9 @@ class MyGame(arcade.View):
         elif key == arcade.key.E and self.near_npc:
             self.near_npc.interact()
         elif key == arcade.key.ESCAPE:
-            if self.pause_fl:
-                self.player.speed = 3
-                self.player.can_jump = True
-            else:
-                self.player.speed = 0
-                self.player.can_jump = False
-                #дописать чтобы у противников тоже пропадала скорость
+            pause = PauseWindow(self)
+            self.window.show_view(pause)
+            return
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.A:
