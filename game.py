@@ -40,7 +40,7 @@ class MyGame(arcade.View):
         half_h = self.camera.viewport_height / 2
 
         DEAD_X = 200
-        DEAD_Y = 120
+        DEAD_Y = 200
 
         left = cam_x - half_w + DEAD_X
         right = cam_x + half_w - DEAD_X

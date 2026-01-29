@@ -125,7 +125,7 @@ class Room:
             new_x = last_x + offset
 
             # Проверяем, чтобы платформа не выходила за границы комнаты
-            new_x = max(self.left + 50, min(new_x, self.right - 50))
+            new_x = max(self.left + 130, min(new_x, self.right - 130))
 
             platform = Platform(new_x, current_y)
             self.platforms.append(platform)
@@ -138,8 +138,8 @@ class Room:
             placed = False
 
             while attempts < 20 and not placed:  # Ограничим попытки
-                x = random.uniform(self.left + 50, self.right - 50)
-                y = random.uniform(self.bottom + 100, self.top - 100)
+                x = random.uniform(self.left + 130, self.right - 130)
+                y = random.uniform(self.bottom + 150, self.top - 100)
 
                 # Проверяем расстояние до всех существующих платформ
                 too_close = False

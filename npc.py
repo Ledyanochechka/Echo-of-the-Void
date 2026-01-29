@@ -3,13 +3,15 @@ import arcade
 
 class NPC(arcade.Sprite):
     def __init__(self, x, y):
-        super().__init__(":resources:images/tiles/mushroomRed.png", scale=0.8)
+        super().__init__("images/npc/npc.png", scale=0.8)
         self.center_x = x
         self.center_y = y
         self.dialog_active = False
         self.dialog_phrases = [
-            "Привет! Я NPC.",
-            "test"
+            "Приветствую странник...",
+            "Ты в самом низу мира...",
+            'Удачи попасть наверх...',
+            'Тебе будут мешать...'
         ]
         self.current_phrase_index = 0
         self.dialog_sprite = None
